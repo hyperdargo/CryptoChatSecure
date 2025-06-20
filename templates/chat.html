@@ -3,129 +3,464 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat</title>
+    <title>Secure PKI Chat</title>
+    <link rel="icon" href="https://img.icons8.com/ios-filled/512/lock--v1.png" type="image/png">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .btn-primary { background-color: #1E40AF; }
-        .btn-primary:hover { background-color: #1E3A8A; }
-        .btn-green { background-color: #10B981; }
-        .btn-green:hover { background-color: #059669; }
-        .chat-message { background-color: #F3F4F6; }
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #1e293b;
+            --accent: #7c3aed;
+            --success: #10b981;
+            --success-dark: #059669;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            min-height: 100vh;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2), 0 2px 4px -1px rgba(37, 99, 235, 0.1);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3), 0 4px 6px -2px rgba(37, 99, 235, 0.1);
+        }
+        
+        .btn-success {
+            background-color: var(--success);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2), 0 2px 4px -1px rgba(16, 185, 129, 0.1);
+        }
+        
+        .btn-success:hover {
+            background-color: var(--success-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3), 0 4px 6px -2px rgba(16, 185, 129, 0.1);
+        }
+        
+        .nav-link {
+            position: relative;
+            padding-bottom: 2px;
+        }
+        
+        .nav-link:after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background-color: white;
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover:after {
+            width: 100%;
+        }
+        
+        .chat-container {
+            height: 65vh;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary) #f1f5f9;
+        }
+        
+        .chat-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .chat-container::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        
+        .chat-container::-webkit-scrollbar-thumb {
+            background-color: var(--primary);
+            border-radius: 3px;
+        }
+        
+        .message-incoming {
+            background-color: white;
+            border-radius: 1rem 1rem 1rem 0;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .message-outgoing {
+            background-color: var(--primary);
+            color: white;
+            border-radius: 1rem 1rem 0 1rem;
+        }
+        
+        .file-card {
+            transition: all 0.3s ease;
+            border-left: 4px solid var(--primary);
+        }
+        
+        .file-card:hover {
+            transform: translateX(5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .security-badge {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(37, 99, 235, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+        }
+        
+        .gradient-text {
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .tab-active {
+            border-bottom: 3px solid var(--primary);
+            font-weight: 600;
+            color: var(--primary);
+        }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col">
+<body class="flex flex-col min-h-screen">
     <!-- Navigation -->
-    <nav class="bg-blue-800 text-white p-4">
+    <nav class="bg-gradient-to-r from-blue-800 to-indigo-900 text-white p-4 shadow-lg">
         <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold">Secure PKI Chat</h1>
-            <div class="space-x-4">
-                <a href="{{ url_for('index') }}" class="hover:underline">Home</a>
-                <a href="{{ url_for('register') }}" class="hover:underline">Register</a>
-                <a href="{{ url_for('login') }}" class="hover:underline">Login</a>
+            <div class="flex items-center space-x-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                <h1 class="text-2xl font-bold">Secure<span class="gradient-text">PKI</span>Chat</h1>
             </div>
+            <div class="hidden md:flex space-x-6 items-center">
+                <a href="{{ url_for('index') }}" class="nav-link">Home</a>
+                <a href="{{ url_for('register') }}" class="nav-link">Register</a>
+                <a href="{{ url_for('login') }}" class="nav-link">Login</a>
+                <div class="flex items-center space-x-2">
+                    <div class="h-8 w-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold">
+                        {{ session.username|first|upper }}
+                    </div>
+                    <span class="font-medium">{{ session.username }} ({{ role }})</span>
+                </div>
+            </div>
+            <button class="md:hidden focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
         </div>
     </nav>
 
     <!-- Main Content -->
-    <div class="container mx-auto p-4 flex-grow">
-        <div class="bg-white shadow-lg rounded-lg p-6">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4">Chat ({{ session.username }} - {{ role }})</h2>
+    <main class="flex-grow container mx-auto px-4 py-6">
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <!-- Chat Header -->
+            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 border-b">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold text-gray-800">
+                        <i class="fas fa-lock mr-2 text-blue-600"></i> Secure Chat
+                    </h2>
+                    <div class="flex items-center space-x-2">
+                        <div class="security-badge flex items-center space-x-2 bg-blue-600/20 px-3 py-1 rounded-full border border-blue-400/30">
+                            <i class="fas fa-shield-alt text-blue-300"></i>
+                            <span class="text-sm font-medium text-blue-100">End-to-End Encrypted</span>
+                        </div>
+                    </div>
+                </div>
+                <p class="text-gray-600 mt-1">Logged in as <span class="font-medium">{{ session.username }}</span> ({{ role }})</p>
+            </div>
+            
             {% with messages = get_flashed_messages() %}
                 {% if messages %}
-                    <div class="bg-red-500 text-white p-2 rounded mb-4">
-                        {{ messages[0] }}
+                    <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mx-6 mt-4 rounded">
+                        <div class="flex items-center">
+                            <i class="fas fa-exclamation-circle mr-2"></i>
+                            <p>{{ messages[0] }}</p>
+                        </div>
                     </div>
                 {% endif %}
             {% endwith %}
             
-            <!-- Chat Form -->
-            <form method="POST" class="space-y-4 mb-6">
-                <div>
-                    <label for="receiver_id" class="block text-gray-700 font-medium">Send to:</label>
-                    <select name="receiver_id" id="receiver_id" class="border p-2 w-full rounded focus:ring-2 focus:ring-blue-500" required>
-                        {% for user in users %}
-                            <option value="{{ user[0] }}">{{ user[1] }} ({{ user[2] }})</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label for="message" class="block text-gray-700 font-medium">Message:</label>
-                    <textarea name="message" id="message" class="border p-2 w-full rounded focus:ring-2 focus:ring-blue-500" rows="4" required></textarea>
-                </div>
-                <button type="submit" class="btn-primary text-white px-4 py-2 rounded font-medium w-full">Send Message</button>
-            </form>
-            
-            <!-- File Upload Form -->
-            <form method="POST" enctype="multipart/form-data" action="{{ url_for('upload_file') }}" class="space-y-4 mb-6">
-                <div>
-                    <label for="receiver_id" class="block text-gray-700 font-medium">Send file to:</label>
-                    <select name="receiver_id" id="receiver_id" class="border p-2 w-full rounded focus:ring-2 focus:ring-blue-500" required>
-                        {% for user in users %}
-                            <option value="{{ user[0] }}">{{ user[1] }} ({{ user[2] }})</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div>
-                    <label for="file" class="block text-gray-700 font-medium">File:</label>
-                    <input type="file" name="file" id="file" class="border p-2 w-full rounded" required>
-                </div>
-                <button type="submit" class="btn-green text-white px-4 py-2 rounded font-medium w-full">Upload File</button>
-            </form>
-            
-            <!-- Chat History -->
-            <h3 class="text-xl font-bold text-gray-800 mb-2">Chat History</h3>
-            <div class="border rounded-lg p-4 bg-gray-50 mb-6">
-                {% if chats %}
-                    {% for chat in chats %}
-                        <div class="chat-message p-3 rounded-lg mb-2">
-                            <p class="font-medium text-gray-800">
-                                <strong>{{ chat[4] }}</strong> to <strong>ID {{ chat[1] }}</strong> at {{ chat[3] }}:
-                            </p>
-                            <p class="text-gray-700">{{ chat[2] }}</p>
-                            <p class="text-sm text-gray-500">
-                                {% if chat[7] %}
-                                    <span class="text-green-600">✓ Signature Verified</span>
-                                {% else %}
-                                    <span class="text-red-600">✗ Signature Invalid</span>
-                                {% endif %}
-                                |
-                                {% if chat[8] %}
-                                    <span class="text-green-600">✓ Certificate Valid</span>
-                                {% else %}
-                                    <span class="text-red-600">✗ Certificate Invalid</span>
-                                {% endif %}
-                            </p>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <p class="text-gray-600">No messages yet.</p>
-                {% endif %}
+            <!-- Tab Navigation -->
+            <div class="border-b border-gray-200">
+                <nav class="flex -mb-px">
+                    <button id="message-tab" class="tab-active py-4 px-6 text-center border-b-2 font-medium text-sm flex items-center justify-center space-x-2">
+                        <i class="fas fa-comment-dots"></i>
+                        <span>Messages</span>
+                    </button>
+                    <button id="file-tab" class="py-4 px-6 text-center border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 flex items-center justify-center space-x-2">
+                        <i class="fas fa-file-upload"></i>
+                        <span>Files</span>
+                    </button>
+                </nav>
             </div>
             
-            <!-- File Download Links -->
-            <h3 class="text-xl font-bold text-gray-800 mb-2">Files</h3>
-            <div class="border rounded-lg p-4 bg-gray-50">
-                {% if files %}
-                    {% for file in files %}
-                        <div class="mb-2">
-                            <a href="{{ url_for('download_file', file_id=file[0]) }}" class="text-blue-600 hover:underline">{{ file[3] }}</a>
-                            <span class="text-gray-600">from {{ file[4] }} (ID: {{ file[1] }}) to ID: {{ file[2] }}</span>
+            <!-- Message Tab Content -->
+            <div id="message-content" class="p-6">
+                <div class="grid md:grid-cols-3 gap-6">
+                    <!-- Message Form -->
+                    <div class="md:col-span-1">
+                        <div class="bg-blue-50 rounded-lg p-4 shadow-inner">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                                <i class="fas fa-paper-plane mr-2 text-blue-600"></i> New Message
+                            </h3>
+                            <form method="POST" class="space-y-4">
+                                <div>
+                                    <label for="receiver_id" class="block text-sm font-medium text-gray-700 mb-1">Recipient</label>
+                                    <select name="receiver_id" id="receiver_id" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3 border" required>
+                                        {% for user in users %}
+                                            <option value="{{ user[0] }}">{{ user[1] }} ({{ user[2] }})</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="message" class="block text-sm font-medium text-gray-700 mb-1">Message</label>
+                                    <textarea name="message" id="message" rows="4" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3 border" required></textarea>
+                                </div>
+                                <button type="submit" class="btn-primary text-white px-4 py-2 rounded-md font-medium w-full flex items-center justify-center space-x-2">
+                                    <i class="fas fa-paper-plane"></i>
+                                    <span>Send Message</span>
+                                </button>
+                            </form>
                         </div>
-                    {% endfor %}
-                {% else %}
-                    <p class="text-gray-600">No files yet.</p>
-                {% endif %}
+                    </div>
+                    
+                    <!-- Chat History -->
+                    <div class="md:col-span-2">
+                        <div class="bg-gray-50 rounded-lg p-4 shadow-inner h-full">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-semibold text-gray-800 flex items-center">
+                                    <i class="fas fa-history mr-2 text-blue-600"></i> Message History
+                                </h3>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                        {{ chats|length }} message{% if chats|length != 1 %}s{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="chat-container">
+                                {% if chats %}
+                                    {% for chat in chats %}
+                                        <div class="mb-4 {% if chat[1] == session.user_id %}text-right{% endif %}">
+                                            <div class="inline-block max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl {% if chat[1] == session.user_id %}message-outgoing{% else %}message-incoming{% endif %} p-4 mb-1">
+                                                <p class="{% if chat[1] == session.user_id %}text-white{% else %}text-gray-800{% endif %}">{{ chat[2] }}</p>
+                                            </div>
+                                            <div class="text-xs text-gray-500 mt-1">
+                                                <span class="font-medium {% if chat[1] == session.user_id %}text-blue-600{% else %}text-gray-600{% endif %}">
+                                                    {% if chat[1] == session.user_id %}
+                                                        You to {{ chat[5] }}
+                                                    {% else %}
+                                                        {{ chat[4] }} to you
+                                                    {% endif %}
+                                                </span>
+                                                <span class="mx-1">•</span>
+                                                <span>{{ chat[3] }}</span>
+                                            </div>
+                                            <div class="flex items-center space-x-2 text-xs mt-1 {% if chat[1] == session.user_id %}justify-end{% endif %}">
+                                                {% if chat[7] %}
+                                                    <span class="text-green-600 flex items-center">
+                                                        <i class="fas fa-check-circle mr-1"></i> Verified
+                                                    </span>
+                                                {% else %}
+                                                    <span class="text-red-600 flex items-center">
+                                                        <i class="fas fa-times-circle mr-1"></i> Unverified
+                                                    </span>
+                                                {% endif %}
+                                                <span class="text-gray-400">|</span>
+                                                {% if chat[8] %}
+                                                    <span class="text-green-600 flex items-center">
+                                                        <i class="fas fa-certificate mr-1"></i> Cert Valid
+                                                    </span>
+                                                {% else %}
+                                                    <span class="text-red-600 flex items-center">
+                                                        <i class="fas fa-exclamation-triangle mr-1"></i> Cert Invalid
+                                                    </span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="text-center py-8 text-gray-500">
+                                        <i class="fas fa-comment-slash text-3xl mb-2"></i>
+                                        <p>No messages yet. Start a conversation!</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- File Tab Content -->
+            <div id="file-content" class="hidden p-6">
+                <div class="grid md:grid-cols-3 gap-6">
+                    <!-- File Upload Form -->
+                    <div class="md:col-span-1">
+                        <div class="bg-green-50 rounded-lg p-4 shadow-inner">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                                <i class="fas fa-file-upload mr-2 text-green-600"></i> Upload File
+                            </h3>
+                            <form method="POST" enctype="multipart/form-data" action="{{ url_for('upload_file') }}" class="space-y-4">
+                                <div>
+                                    <label for="file_receiver_id" class="block text-sm font-medium text-gray-700 mb-1">Recipient</label>
+                                    <select name="receiver_id" id="file_receiver_id" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 py-2 px-3 border" required>
+                                        {% for user in users %}
+                                            <option value="{{ user[0] }}">{{ user[1] }} ({{ user[2] }})</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="file" class="block text-sm font-medium text-gray-700 mb-1">File</label>
+                                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+                                        <div class="space-y-1 text-center">
+                                            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                            </svg>
+                                            <div class="flex text-sm text-gray-600">
+                                                <label for="file" class="relative cursor-pointer bg-white rounded-md font-medium text-green-600 hover:text-green-500 focus-within:outline-none">
+                                                    <span>Upload a file</span>
+                                                    <input id="file" name="file" type="file" class="sr-only" required>
+                                                </label>
+                                                <p class="pl-1">or drag and drop</p>
+                                            </div>
+                                            <p class="text-xs text-gray-500">PNG, JPG, PDF up to 10MB</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn-success text-white px-4 py-2 rounded-md font-medium w-full flex items-center justify-center space-x-2">
+                                    <i class="fas fa-upload"></i>
+                                    <span>Upload File</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- File List -->
+                    <div class="md:col-span-2">
+                        <div class="bg-gray-50 rounded-lg p-4 shadow-inner h-full">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-semibold text-gray-800 flex items-center">
+                                    <i class="fas fa-file-download mr-2 text-blue-600"></i> Shared Files
+                                </h3>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                        {{ files|length }} file{% if files|length != 1 %}s{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-3">
+                                {% if files %}
+                                    {% for file in files %}
+                                        <div class="file-card bg-white p-4 rounded-lg shadow-sm">
+                                            <div class="flex items-start justify-between">
+                                                <div class="flex items-start space-x-3">
+                                                    <div class="bg-blue-100 p-2 rounded-lg">
+                                                        {% if file[3].endswith('.pdf') %}
+                                                            <i class="fas fa-file-pdf text-red-500 text-xl"></i>
+                                                        {% elif file[3].endswith('.jpg') or file[3].endswith('.jpeg') or file[3].endswith('.png') %}
+                                                            <i class="fas fa-file-image text-blue-500 text-xl"></i>
+                                                        {% elif file[3].endswith('.doc') or file[3].endswith('.docx') %}
+                                                            <i class="fas fa-file-word text-blue-600 text-xl"></i>
+                                                        {% elif file[3].endswith('.xls') or file[3].endswith('.xlsx') %}
+                                                            <i class="fas fa-file-excel text-green-600 text-xl"></i>
+                                                        {% else %}
+                                                            <i class="fas fa-file text-gray-500 text-xl"></i>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div>
+                                                        <a href="{{ url_for('download_file', file_id=file[0]) }}" class="font-medium text-blue-600 hover:underline">{{ file[3] }}</a>
+                                                        <p class="text-xs text-gray-500 mt-1">
+                                                            {% if file[1] == session.user_id %}
+                                                                You → {{ file[5] }}
+                                                            {% else %}
+                                                                {{ file[4] }} → You
+                                                            {% endif %}
+                                                            <span class="mx-1">•</span>
+                                                            {{ file[6] }}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <a href="{{ url_for('download_file', file_id=file[0]) }}" class="text-blue-600 hover:text-blue-800 p-1">
+                                                    <i class="fas fa-download"></i>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="text-center py-8 text-gray-500">
+                                        <i class="fas fa-file-exclamation text-3xl mb-2"></i>
+                                        <p>No files shared yet. Upload your first file!</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
+    </main>
 
     <!-- Footer -->
-    <footer class="bg-blue-800 text-white p-4 mt-auto">
-        <div class="container mx-auto text-center">
-            <p>&copy; 2025 Secure PKI Chat. All rights reserved.</p>
+    <footer class="bg-gradient-to-r from-blue-900 to-indigo-900 text-white py-6">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center space-x-2 mb-4 md:mb-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    <span class="font-medium">SecurePKI<span class="text-blue-300">Chat</span></span>
+                </div>
+                <p class="text-blue-300 text-sm">&copy; 2025 Secure PKI Chat. All rights reserved.</p>
+            </div>
         </div>
     </footer>
+
+    <script>
+        // Tab switching functionality
+        const messageTab = document.getElementById('message-tab');
+        const fileTab = document.getElementById('file-tab');
+        const messageContent = document.getElementById('message-content');
+        const fileContent = document.getElementById('file-content');
+        
+        messageTab.addEventListener('click', () => {
+            messageTab.classList.add('tab-active');
+            messageTab.classList.remove('text-gray-500', 'hover:text-gray-700');
+            fileTab.classList.remove('tab-active');
+            fileTab.classList.add('text-gray-500', 'hover:text-gray-700');
+            messageContent.classList.remove('hidden');
+            fileContent.classList.add('hidden');
+        });
+        
+        fileTab.addEventListener('click', () => {
+            fileTab.classList.add('tab-active');
+            fileTab.classList.remove('text-gray-500', 'hover:text-gray-700');
+            messageTab.classList.remove('tab-active');
+            messageTab.classList.add('text-gray-500', 'hover:text-gray-700');
+            fileContent.classList.remove('hidden');
+            messageContent.classList.add('hidden');
+        });
+        
+        // Auto-scroll chat to bottom
+        const chatContainer = document.querySelector('.chat-container');
+        if (chatContainer) {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+    </script>
 </body>
 </html>
