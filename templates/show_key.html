@@ -3,78 +3,342 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Private Key and Certificate</title>
+    <title>Your PKI Credentials | Secure PKI Chat</title>
+    <link rel="icon" href="https://img.icons8.com/ios-filled/512/lock--v1.png" type="image/png">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .btn-primary { background-color: #1E40AF; }
-        .btn-primary:hover { background-color: #1E3A8A; }
-        .btn-secondary { background-color: #6B7280; }
-        .btn-secondary:hover { background-color: #4B5563; }
-    </style>
-    <script>
-        function copyToClipboard(elementId, buttonId) {
-            const text = document.getElementById(elementId).value;
-            navigator.clipboard.writeText(text).then(() => {
-                const button = document.getElementById(buttonId);
-                button.textContent = 'Copied!';
-                setTimeout(() => { button.textContent = 'Copy to Clipboard'; }, 2000);
-            });
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #1e293b;
+            --accent: #7c3aed;
+            --danger: #dc2626;
         }
-    </script>
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            min-height: 100vh;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2), 0 2px 4px -1px rgba(37, 99, 235, 0.1);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3), 0 4px 6px -2px rgba(37, 99, 235, 0.1);
+        }
+        
+        .btn-secondary {
+            background-color: var(--secondary);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #374151;
+            transform: translateY(-1px);
+        }
+        
+        .btn-danger {
+            background-color: var(--danger);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-danger:hover {
+            background-color: #b91c1c;
+            transform: translateY(-1px);
+        }
+        
+        .nav-link {
+            position: relative;
+            padding-bottom: 2px;
+        }
+        
+        .nav-link:after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background-color: white;
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover:after {
+            width: 100%;
+        }
+        
+        .gradient-text {
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .key-box {
+            position: relative;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.375rem;
+            overflow: hidden;
+        }
+        
+        .key-content {
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+            line-height: 1.25rem;
+            padding: 1rem;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        
+        .key-box:hover .copy-btn {
+            opacity: 1;
+        }
+        
+        .cert-detail {
+            display: flex;
+            margin-bottom: 0.5rem;
+        }
+        
+        .cert-label {
+            font-weight: 500;
+            color: #4b5563;
+            min-width: 120px;
+        }
+        
+        .cert-value {
+            color: #1f2937;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .security-badge {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(37, 99, 235, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+        }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col">
+<body class="flex flex-col min-h-screen">
     <!-- Navigation -->
-    <nav class="bg-blue-800 text-white p-4">
+    <nav class="bg-gradient-to-r from-blue-800 to-indigo-900 text-white p-4 shadow-lg">
         <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold">Secure PKI Chat</h1>
-            <div class="space-x-4">
-                <a href="{{ url_for('index') }}" class="hover:underline">Home</a>
-                <a href="{{ url_for('register') }}" class="hover:underline">Register</a>
-                <a href="{{ url_for('login') }}" class="hover:underline">Login</a>
+            <div class="flex items-center space-x-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                <h1 class="text-2xl font-bold">Secure<span class="gradient-text">PKI</span>Chat</h1>
             </div>
+            <div class="hidden md:flex space-x-6 items-center">
+                <a href="{{ url_for('index') }}" class="nav-link">Home</a>
+                <a href="{{ url_for('register') }}" class="nav-link">Register</a>
+                <a href="{{ url_for('login') }}" class="nav-link">Login</a>
+                <div class="security-badge flex items-center space-x-2 bg-blue-600/20 px-3 py-1 rounded-full border border-blue-400/30">
+                    <i class="fas fa-shield-alt text-blue-300"></i>
+                    <span class="text-sm font-medium text-blue-100">End-to-End Encrypted</span>
+                </div>
+            </div>
+            <button class="md:hidden focus:outline-none">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
         </div>
     </nav>
 
     <!-- Main Content -->
-    <div class="container mx-auto p-4 flex-grow">
-        <div class="bg-white shadow-lg rounded-lg p-6 max-w-2xl mx-auto">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4">Registration Successful, {{ username }}!</h2>
-            <p class="text-gray-600 mb-6">Below are your private key and digital certificate. <strong>Save them securely</strong> (e.g., copy to clipboard or download). You will need them to log in and verify your identity.</p>
-            
-            <h3 class="text-xl font-bold text-gray-800 mb-2">Private Key</h3>
-            <div class="relative mb-4">
-                <textarea id="private_key" class="border p-2 w-full rounded font-mono text-sm" rows="8" readonly>{{ private_key }}</textarea>
-                <button id="copy_key" onclick="copyToClipboard('private_key', 'copy_key')" class="btn-secondary text-white px-4 py-2 rounded absolute bottom-2 right-2">Copy to Clipboard</button>
+    <main class="flex-grow container mx-auto px-4 py-8">
+        <div class="bg-white rounded-xl shadow-2xl overflow-hidden max-w-4xl mx-auto">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 border-b">
+                <div class="flex items-center justify-center space-x-3">
+                    <div class="bg-blue-100 p-3 rounded-full">
+                        <i class="fas fa-key text-blue-600 text-xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800">Your PKI Credentials</h2>
+                </div>
+                <p class="text-center text-gray-600 mt-2">Welcome, <span class="font-semibold">{{ username }}</span>! Please securely store these credentials.</p>
             </div>
             
-            <h3 class="text-xl font-bold text-gray-800 mb-2">Digital Certificate</h3>
-            <div class="relative mb-4">
-                <textarea id="certificate" class="border p-2 w-full rounded font-mono text-sm" rows="8" readonly>{{ cert_pem }}</textarea>
-                <button id="copy_cert" onclick="copyToClipboard('certificate', 'copy_cert')" class="btn-secondary text-white px-4 py-2 rounded absolute bottom-2 right-2">Copy to Clipboard</button>
+            <div class="p-6">
+                <!-- Warning Alert -->
+                <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6 rounded">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-triangle text-red-500"></i>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-red-800">Security Notice</h3>
+                            <div class="mt-2 text-sm text-red-700">
+                                <p>These credentials are <strong>only shown once</strong> and cannot be recovered if lost. Store them securely and never share your private key.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Private Key Section -->
+                <div class="mb-8">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                            <i class="fas fa-lock mr-2 text-blue-600"></i> Private Key
+                        </h3>
+                        <div class="flex space-x-2">
+                            <button id="download-key" class="btn-secondary text-white px-3 py-1 rounded text-sm flex items-center">
+                                <i class="fas fa-download mr-1"></i> Download
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="key-box">
+                        <div id="private-key" class="key-content">{{ private_key }}</div>
+                        <button id="copy-key" class="copy-btn btn-secondary text-white px-3 py-1 rounded text-sm flex items-center">
+                            <i class="fas fa-copy mr-1"></i> Copy
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Certificate Section -->
+                <div class="mb-8">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                            <i class="fas fa-certificate mr-2 text-blue-600"></i> Digital Certificate
+                        </h3>
+                        <div class="flex space-x-2">
+                            <a href="{{ url_for('download_cert') }}" class="btn-secondary text-white px-3 py-1 rounded text-sm flex items-center">
+                                <i class="fas fa-download mr-1"></i> Download
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="key-box">
+                        <div id="certificate" class="key-content">{{ cert_pem }}</div>
+                        <button id="copy-cert" class="copy-btn btn-secondary text-white px-3 py-1 rounded text-sm flex items-center">
+                            <i class="fas fa-copy mr-1"></i> Copy
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Certificate Details -->
+                <div class="mb-8">
+                    <h3 class="text-xl font-bold text-gray-800 mb-3 flex items-center">
+                        <i class="fas fa-info-circle mr-2 text-blue-600"></i> Certificate Details
+                    </h3>
+                    
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <div class="cert-detail">
+                            <span class="cert-label">Subject:</span>
+                            <span class="cert-value">{{ cert_details.subject }}</span>
+                        </div>
+                        <div class="cert-detail">
+                            <span class="cert-label">Issuer:</span>
+                            <span class="cert-value">{{ cert_details.issuer }}</span>
+                        </div>
+                        <div class="cert-detail">
+                            <span class="cert-label">Serial Number:</span>
+                            <span class="cert-value">{{ cert_details.serial_number }}</span>
+                        </div>
+                        <div class="cert-detail">
+                            <span class="cert-label">Valid From:</span>
+                            <span class="cert-value">{{ cert_details.not_valid_before }}</span>
+                        </div>
+                        <div class="cert-detail">
+                            <span class="cert-label">Valid Until:</span>
+                            <span class="cert-value">{{ cert_details.not_valid_after }}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="flex flex-col space-y-3 mt-6">
+                    <a href="{{ url_for('login') }}" class="btn-primary text-white px-4 py-3 rounded-md font-medium w-full flex items-center justify-center space-x-2">
+                        <i class="fas fa-sign-in-alt"></i>
+                        <span>Proceed to Login</span>
+                    </a>
+                    <button id="download-all" class="btn-secondary text-white px-4 py-3 rounded-md font-medium w-full flex items-center justify-center space-x-2">
+                        <i class="fas fa-file-archive"></i>
+                        <span>Download All as ZIP</span>
+                    </button>
+                </div>
             </div>
-            <a href="{{ url_for('download_cert') }}" class="btn-primary text-white px-4 py-2 rounded inline-block mb-4">Download Certificate (.pem)</a>
-            
-            <h3 class="text-xl font-bold text-gray-800 mb-2">Certificate Details</h3>
-            <ul class="list-disc pl-5 mb-6 text-gray-700">
-                <li><strong>Subject:</strong> {{ cert_details.subject }}</li>
-                <li><strong>Issuer:</strong> {{ cert_details.issuer }}</li>
-                <li><strong>Serial Number:</strong> {{ cert_details.serial_number }}</li>
-                <li><strong>Valid From:</strong> {{ cert_details.not_valid_before }}</li>
-                <li><strong>Valid Until:</strong> {{ cert_details.not_valid_after }}</li>
-            </ul>
-            
-            <p class="text-red-600 mb-4"><strong>Warning:</strong> Do not share your private key or certificate. If lost, you cannot log in.</p>
-            <a href="{{ url_for('login') }}" class="btn-primary text-white px-4 py-2 rounded w-full text-center font-medium">Proceed to Login</a>
         </div>
-    </div>
+    </main>
 
     <!-- Footer -->
-    <footer class="bg-blue-800 text-white p-4 mt-auto">
-        <div class="container mx-auto text-center">
-            <p>© 2025 Secure PKI Chat. All rights reserved.</p>
+    <footer class="bg-gradient-to-r from-blue-900 to-indigo-900 text-white py-6">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="flex items-center space-x-2 mb-4 md:mb-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    <span class="font-medium">SecurePKI<span class="text-blue-300">Chat</span></span>
+                </div>
+                <p class="text-blue-300 text-sm">&copy; 2025 Secure PKI Chat. All rights reserved.</p>
+            </div>
         </div>
     </footer>
+
+    <script>
+        // Copy functionality
+        function copyToClipboard(text, buttonId) {
+            navigator.clipboard.writeText(text).then(() => {
+                const button = document.getElementById(buttonId);
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-check mr-1"></i> Copied!';
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                }, 2000);
+            });
+        }
+        
+        document.getElementById('copy-key').addEventListener('click', () => {
+            const keyText = document.getElementById('private-key').textContent;
+            copyToClipboard(keyText, 'copy-key');
+        });
+        
+        document.getElementById('copy-cert').addEventListener('click', () => {
+            const certText = document.getElementById('certificate').textContent;
+            copyToClipboard(certText, 'copy-cert');
+        });
+        
+        // Download private key
+        document.getElementById('download-key').addEventListener('click', () => {
+            const keyText = document.getElementById('private-key').textContent;
+            const blob = new Blob([keyText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'private_key.pem';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+        
+        // Download all as ZIP (placeholder - would need server-side implementation)
+        document.getElementById('download-all').addEventListener('click', () => {
+            alert('This would trigger a server-side ZIP download in a real implementation');
+        });
+    </script>
 </body>
 </html>
