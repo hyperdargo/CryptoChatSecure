@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .btn-primary { background-color: #1E40AF; }
+        .btn-primary:hover { background-color: #1E3A8A; }
+        .btn-green { background-color: #10B981; }
+        .btn-green:hover { background-color: #059669; }
+        .chat-message { background-color: #F3F4F6; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+    <!-- Navigation -->
+    <nav class="bg-blue-800 text-white p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold">Secure PKI Chat</h1>
+            <div class="space-x-4">
+                <a href="{{ url_for('index') }}" class="hover:underline">Home</a>
+                <a href="{{ url_for('register') }}" class="hover:underline">Register</a>
+                <a href="{{ url_for('login') }}" class="hover:underline">Login</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mx-auto p-4 flex-grow">
+        <div class="bg-white shadow-lg rounded-lg p-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Chat ({{ session.username }} - {{ role }})</h2>
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    <div class="bg-red-500 text-white p-2 rounded mb-4">
+                        {{ messages[0] }}
+                    </div>
+                {% endif %}
+            {% endwith %}
+            
+            <!-- Chat Form -->
+            <form method="POST" class="space-y-4 mb-6">
+                <div>
+                    <label for="receiver_id" class="block text-gray-700 font-medium">Send to:</label>
+                    <select name="receiver_id" id="receiver_id" class="border p-2 w-full rounded focus:ring-2 focus:ring-blue-500" required>
+                        {% for user in users %}
+                            <option value="{{ user[0] }}">{{ user[1] }} ({{ user[2] }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="message" class="block text-gray-700 font-medium">Message:</label>
+                    <textarea name="message" id="message" class="border p-2 w-full rounded focus:ring-2 focus:ring-blue-500" rows="4" required></textarea>
+                </div>
+                <button type="submit" class="btn-primary text-white px-4 py-2 rounded font-medium w-full">Send Message</button>
+            </form>
+            
+            <!-- File Upload Form -->
+            <form method="POST" enctype="multipart/form-data" action="{{ url_for('upload_file') }}" class="space-y-4 mb-6">
+                <div>
+                    <label for="receiver_id" class="block text-gray-700 font-medium">Send file to:</label>
+                    <select name="receiver_id" id="receiver_id" class="border p-2 w-full rounded focus:ring-2 focus:ring-blue-500" required>
+                        {% for user in users %}
+                            <option value="{{ user[0] }}">{{ user[1] }} ({{ user[2] }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="file" class="block text-gray-700 font-medium">File:</label>
+                    <input type="file" name="file" id="file" class="border p-2 w-full rounded" required>
+                </div>
+                <button type="submit" class="btn-green text-white px-4 py-2 rounded font-medium w-full">Upload File</button>
+            </form>
+            
+            <!-- Chat History -->
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Chat History</h3>
+            <div class="border rounded-lg p-4 bg-gray-50 mb-6">
+                {% if chats %}
+                    {% for chat in chats %}
+                        <div class="chat-message p-3 rounded-lg mb-2">
+                            <p class="font-medium text-gray-800">
+                                <strong>{{ chat[4] }}</strong> to <strong>ID {{ chat[1] }}</strong> at {{ chat[3] }}:
+                            </p>
+                            <p class="text-gray-700">{{ chat[2] }}</p>
+                            <p class="text-sm text-gray-500">
+                                {% if chat[7] %}
+                                    <span class="text-green-600">✓ Signature Verified</span>
+                                {% else %}
+                                    <span class="text-red-600">✗ Signature Invalid</span>
+                                {% endif %}
+                                |
+                                {% if chat[8] %}
+                                    <span class="text-green-600">✓ Certificate Valid</span>
+                                {% else %}
+                                    <span class="text-red-600">✗ Certificate Invalid</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-gray-600">No messages yet.</p>
+                {% endif %}
+            </div>
+            
+            <!-- File Download Links -->
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Files</h3>
+            <div class="border rounded-lg p-4 bg-gray-50">
+                {% if files %}
+                    {% for file in files %}
+                        <div class="mb-2">
+                            <a href="{{ url_for('download_file', file_id=file[0]) }}" class="text-blue-600 hover:underline">{{ file[3] }}</a>
+                            <span class="text-gray-600">from {{ file[4] }} (ID: {{ file[1] }}) to ID: {{ file[2] }}</span>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-gray-600">No files yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-blue-800 text-white p-4 mt-auto">
+        <div class="container mx-auto text-center">
+            <p>&copy; 2025 Secure PKI Chat. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>

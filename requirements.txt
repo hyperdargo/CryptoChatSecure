@@ -1,0 +1,4 @@
+Flask==2.3.2
+cryptography==36.0.2
+pycryptodome==3.14.1
+Werkzeug==2.3.7

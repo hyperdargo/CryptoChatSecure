@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Private Key and Certificate</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .btn-primary { background-color: #1E40AF; }
+        .btn-primary:hover { background-color: #1E3A8A; }
+        .btn-secondary { background-color: #6B7280; }
+        .btn-secondary:hover { background-color: #4B5563; }
+    </style>
+    <script>
+        function copyToClipboard(elementId, buttonId) {
+            const text = document.getElementById(elementId).value;
+            navigator.clipboard.writeText(text).then(() => {
+                const button = document.getElementById(buttonId);
+                button.textContent = 'Copied!';
+                setTimeout(() => { button.textContent = 'Copy to Clipboard'; }, 2000);
+            });
+        }
+    </script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+    <!-- Navigation -->
+    <nav class="bg-blue-800 text-white p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold">Secure PKI Chat</h1>
+            <div class="space-x-4">
+                <a href="{{ url_for('index') }}" class="hover:underline">Home</a>
+                <a href="{{ url_for('register') }}" class="hover:underline">Register</a>
+                <a href="{{ url_for('login') }}" class="hover:underline">Login</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mx-auto p-4 flex-grow">
+        <div class="bg-white shadow-lg rounded-lg p-6 max-w-2xl mx-auto">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Registration Successful, {{ username }}!</h2>
+            <p class="text-gray-600 mb-6">Below are your private key and digital certificate. <strong>Save them securely</strong> (e.g., copy to clipboard or download). You will need them to log in and verify your identity.</p>
+            
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Private Key</h3>
+            <div class="relative mb-4">
+                <textarea id="private_key" class="border p-2 w-full rounded font-mono text-sm" rows="8" readonly>{{ private_key }}</textarea>
+                <button id="copy_key" onclick="copyToClipboard('private_key', 'copy_key')" class="btn-secondary text-white px-4 py-2 rounded absolute bottom-2 right-2">Copy to Clipboard</button>
+            </div>
+            
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Digital Certificate</h3>
+            <div class="relative mb-4">
+                <textarea id="certificate" class="border p-2 w-full rounded font-mono text-sm" rows="8" readonly>{{ cert_pem }}</textarea>
+                <button id="copy_cert" onclick="copyToClipboard('certificate', 'copy_cert')" class="btn-secondary text-white px-4 py-2 rounded absolute bottom-2 right-2">Copy to Clipboard</button>
+            </div>
+            <a href="{{ url_for('download_cert') }}" class="btn-primary text-white px-4 py-2 rounded inline-block mb-4">Download Certificate (.pem)</a>
+            
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Certificate Details</h3>
+            <ul class="list-disc pl-5 mb-6 text-gray-700">
+                <li><strong>Subject:</strong> {{ cert_details.subject }}</li>
+                <li><strong>Issuer:</strong> {{ cert_details.issuer }}</li>
+                <li><strong>Serial Number:</strong> {{ cert_details.serial_number }}</li>
+                <li><strong>Valid From:</strong> {{ cert_details.not_valid_before }}</li>
+                <li><strong>Valid Until:</strong> {{ cert_details.not_valid_after }}</li>
+            </ul>
+            
+            <p class="text-red-600 mb-4"><strong>Warning:</strong> Do not share your private key or certificate. If lost, you cannot log in.</p>
+            <a href="{{ url_for('login') }}" class="btn-primary text-white px-4 py-2 rounded w-full text-center font-medium">Proceed to Login</a>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-blue-800 text-white p-4 mt-auto">
+        <div class="container mx-auto text-center">
+            <p>© 2025 Secure PKI Chat. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>
