@@ -298,9 +298,32 @@
         </div>
     </footer>
 
-    <script>
-        // Copy functionality
-        function copyToClipboard(text, buttonId) {
+<script>
+    function fallbackCopyTextToClipboard(text, buttonId) {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";  // Avoid scrolling to bottom
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        try {
+            const successful = document.execCommand('copy');
+            const button = document.getElementById(buttonId);
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-check mr-1"></i> Copied!';
+            setTimeout(() => {
+                button.innerHTML = originalText;
+            }, 2000);
+        } catch (err) {
+            console.error('Fallback: Copy failed', err);
+        }
+
+        document.body.removeChild(textArea);
+    }
+
+    function copyToClipboard(text, buttonId) {
+        if (navigator.clipboard) {
             navigator.clipboard.writeText(text).then(() => {
                 const button = document.getElementById(buttonId);
                 const originalText = button.innerHTML;
@@ -308,37 +331,44 @@
                 setTimeout(() => {
                     button.innerHTML = originalText;
                 }, 2000);
+            }).catch(err => {
+                console.error('Async: Could not copy text: ', err);
+                fallbackCopyTextToClipboard(text, buttonId);
             });
+        } else {
+            fallbackCopyTextToClipboard(text, buttonId);
         }
-        
-        document.getElementById('copy-key').addEventListener('click', () => {
-            const keyText = document.getElementById('private-key').textContent;
-            copyToClipboard(keyText, 'copy-key');
-        });
-        
-        document.getElementById('copy-cert').addEventListener('click', () => {
-            const certText = document.getElementById('certificate').textContent;
-            copyToClipboard(certText, 'copy-cert');
-        });
-        
-        // Download private key
-        document.getElementById('download-key').addEventListener('click', () => {
-            const keyText = document.getElementById('private-key').textContent;
-            const blob = new Blob([keyText], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'private_key.pem';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        });
-        
-        // Download all as ZIP (placeholder - would need server-side implementation)
-        document.getElementById('download-all').addEventListener('click', () => {
-            alert('This would trigger a server-side ZIP download in a real implementation');
-        });
-    </script>
+    }
+
+    document.getElementById('copy-key').addEventListener('click', () => {
+        const keyText = document.getElementById('private-key').innerText.trim();
+        copyToClipboard(keyText, 'copy-key');
+    });
+
+    document.getElementById('copy-cert').addEventListener('click', () => {
+        const certText = document.getElementById('certificate').innerText.trim();
+        copyToClipboard(certText, 'copy-cert');
+    });
+
+    // Download private key
+    document.getElementById('download-key').addEventListener('click', () => {
+        const keyText = document.getElementById('private-key').innerText.trim();
+        const blob = new Blob([keyText], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'private_key.pem';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    });
+
+    // Download all as ZIP (placeholder)
+    document.getElementById('download-all').addEventListener('click', () => {
+        alert('This would trigger a server-side ZIP download in a real implementation');
+    });
+</script>
+
 </body>
 </html>
