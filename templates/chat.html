@@ -257,18 +257,13 @@
                                     {% for chat in chats %}
                                         <div class="mb-4 {% if chat[1] == session.user_id %}text-right{% endif %}">
                                             <div class="inline-block max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl {% if chat[1] == session.user_id %}message-outgoing{% else %}message-incoming{% endif %} p-4 mb-1">
-                                                <p class="{% if chat[1] == session.user_id %}text-white{% else %}text-gray-800{% endif %}">{{ chat[2] }}</p>
-                                            </div>
-                                            <div class="text-xs text-gray-500 mt-1">
-                                                <span class="font-medium {% if chat[1] == session.user_id %}text-blue-600{% else %}text-gray-600{% endif %}">
-                                                    {% if chat[1] == session.user_id %}
-                                                        You to {{ chat[5] }}
-                                                    {% else %}
-                                                        {{ chat[4] }} to you
-                                                    {% endif %}
-                                                </span>
-                                                <span class="mx-1">•</span>
-                                                <span>{{ chat[3] }}</span>
+                                                {% if chat[2].startswith("b'") and chat[2].endswith("'") %}
+                                                    <p class="{% if chat[1] == session.user_id %}text-white{% else %}text-gray-800{% endif %}">
+                                                        <i class="fas fa-lock"></i> Encrypted message (decryption needed)
+                                                    </p>
+                                                {% else %}
+                                                    <p class="{% if chat[1] == session.user_id %}text-white{% else %}text-gray-800{% endif %}">{{ chat[2] }}</p>
+                                                {% endif %}
                                             </div>
                                             <div class="flex items-center space-x-2 text-xs mt-1 {% if chat[1] == session.user_id %}justify-end{% endif %}">
                                                 {% if chat[7] %}
@@ -425,7 +420,7 @@
                     </svg>
                     <span class="font-medium">SecurePKI<span class="text-blue-300">Chat</span></span>
                 </div>
-                <p class="text-blue-300 text-sm">&copy; 2025 Secure PKI Chat. All rights reserved.</p>
+                <p class="text-blue-300 text-sm">&copy; 2025 Secure PKI Chat By Ankit Gupta. All rights reserved.</p>
             </div>
         </div>
     </footer>
