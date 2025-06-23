@@ -10,6 +10,11 @@ Welcome to **CryptoChatSecure**, where your conversations aren't just private �
 
 Whether you're guarding trade secrets or just flexing your cryptographic muscles — this is your domain.
 
+
+### 🛜 Live On
+```bash
+http://panel.ankitgupta.com.np:25569/
+````
 ---
 
 ## ⚙️ Quick Start — Deploy the Shield
