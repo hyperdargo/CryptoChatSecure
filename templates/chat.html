@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Secure PKI Chat</title>
-    <link rel="icon" href="https://img.icons8.com/ios-filled/512/lock--v1.png" type="image/png">
+    <link rel="icon" href="https://img.icons8.com/ios-filled/50/lock--v1.png" type="image/png">
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -13,7 +13,8 @@
             --primary: #2563eb;
             --primary-dark: #1d4ed8;
             --secondary: #1e293b;
-            --accent: #7c3aed;
+            --public: #9333ea;
+            --accent: #6b21a8;
             --success: #10b981;
             --success-dark: #059669;
             --danger: #ef4444;
@@ -49,6 +50,18 @@
             transform: translateY(-1px);
             box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.3), 0 4px 6px -2px rgba(16, 185, 129, 0.1);
         }
+
+        .btn-public {
+            background-color: var(--public);
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(147, 51, 234, 0.2), 0 2px 4px -1px rgba(147, 51, 234, 0.1);
+        }
+        
+        .btn-public:hover {
+            background-color: #7e22ce;
+            transform: translateY(-1px);
+            box-shadow: 0 10px 15px -3px rgba(147, 51, 234, 0.3), 0 4px 6px -2px rgba(147, 51, 234, 0.1);
+        }
         
         .nav-link {
             position: relative;
@@ -71,7 +84,7 @@
         }
         
         .chat-container {
-            height: 65vh;
+            height: calc(65vh - 40px);
             overflow-y: auto;
             scrollbar-width: thin;
             scrollbar-color: var(--primary) #f1f5f9;
@@ -100,6 +113,12 @@
             background-color: var(--primary);
             color: white;
             border-radius: 1rem 1rem 0 1rem;
+        }
+
+        .message-public {
+            background-color: #f3e8ff;
+            border-radius: 1rem;
+            border-left: 4px solid var(--public);
         }
         
         .file-card {
@@ -133,6 +152,34 @@
             border-bottom: 3px solid var(--primary);
             font-weight: 600;
             color: var(--primary);
+        }
+
+        .inbox-active {
+            background-color: var(--primary);
+            color: white;
+            font-weight: bold;
+        }
+
+        .inbox-item:hover {
+            background-color: var(--primary-dark);
+            color: white;
+        }
+
+        .search-results {
+            position: absolute;
+            z-index: 10;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .search-result-item:hover {
+            background-color: var(--primary);
+            color: white;
         }
     </style>
 </head>
@@ -175,12 +222,12 @@
                     </h2>
                     <div class="flex items-center space-x-2">
                         <div class="security-badge flex items-center space-x-2 bg-blue-600/20 px-3 py-1 rounded-full border border-blue-400/30">
-                            <i class="fas fa-shield-alt text-blue-300"></i>
-                            <span class="text-sm font-medium text-blue-100">End-to-End Encrypted</span>
+                            <i class="fas fa-shield-alt text-blue-400"></i>
+                            <span class="text-sm font-medium text-blue-800">End-to-End Encrypted</span>
                         </div>
                     </div>
                 </div>
-                <p class="text-gray-600 mt-1">Logged in as <span class="font-medium">{{ session.username }}</span> ({{ role }})</p>
+                <p class="text-gray-600 mt-1">Logged in as <span class="font-medium">{{ session.username }} ({{ role }})</span></p>
             </div>
             
             {% with messages = get_flashed_messages() %}
@@ -197,108 +244,215 @@
             <!-- Tab Navigation -->
             <div class="border-b border-gray-200">
                 <nav class="flex -mb-px">
-                    <button id="message-tab" class="tab-active py-4 px-6 text-center border-b-2 font-medium text-sm flex items-center justify-center space-x-2">
-                        <i class="fas fa-comment-dots"></i>
-                        <span>Messages</span>
+                    <button id="private-tab" class="tab-active py-4 px-6 text-center border-b-2 font-semibold text-sm flex items-center justify-center space-x-2">
+                        <i class="fas fa-user-secret"></i>
+                        <span>Private Chat</span>
                     </button>
-                    <button id="file-tab" class="py-4 px-6 text-center border-b-2 font-medium text-sm text-gray-500 hover:text-gray-700 flex items-center justify-center space-x-2">
+                    <button id="file-tab" class="py-4 px-6 text-center border-b-2 font-semibold text-sm text-gray-500 hover:text-gray-700 flex items-center justify-center space-x-2">
                         <i class="fas fa-file-upload"></i>
                         <span>Files</span>
+                    </button>
+                    <button id="public-tab" class="py-4 px-6 text-center border-b-2 font-semibold text-sm text-gray-500 hover:text-gray-700 flex items-center justify-center space-x-2">
+                        <i class="fas fa-globe"></i>
+                        <span>Global Chat</span>
                     </button>
                 </nav>
             </div>
             
-            <!-- Message Tab Content -->
-            <div id="message-content" class="p-6">
-                <div class="grid md:grid-cols-3 gap-6">
-                    <!-- Message Form -->
+            <!-- Private Chat Content -->
+            <div id="private-content" class="p-6">
+                <div class="grid md:grid-cols-4 gap-6">
+                    <!-- Inbox Sidebar with Search -->
                     <div class="md:col-span-1">
                         <div class="bg-blue-50 rounded-lg p-4 shadow-inner">
                             <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
-                                <i class="fas fa-paper-plane mr-2 text-blue-600"></i> New Message
+                                <i class="fas fa-inbox mr-2 text-blue-600"></i> Inboxes
                             </h3>
-                            <form method="POST" class="space-y-4">
-                                <div>
-                                    <label for="receiver_id" class="block text-sm font-medium text-gray-700 mb-1">Recipient</label>
-                                    <select name="receiver_id" id="receiver_id" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3 border" required>
-                                        {% for user in users %}
-                                            <option value="{{ user[0] }}">{{ user[1] }} ({{ user[2] }})</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label for="message" class="block text-sm font-medium text-gray-700 mb-1">Message</label>
-                                    <textarea name="message" id="message" rows="4" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3 border" required></textarea>
-                                </div>
-                                <button type="submit" class="btn-primary text-white px-4 py-2 rounded-md font-medium w-full flex items-center justify-center space-x-2">
-                                    <i class="fas fa-paper-plane"></i>
-                                    <span>Send Message</span>
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                    
-                    <!-- Chat History -->
-                    <div class="md:col-span-2">
-                        <div class="bg-gray-50 rounded-lg p-4 shadow-inner h-full">
-                            <div class="flex justify-between items-center mb-4">
-                                <h3 class="text-lg font-semibold text-gray-800 flex items-center">
-                                    <i class="fas fa-history mr-2 text-blue-600"></i> Message History
-                                </h3>
-                                <div class="flex items-center space-x-2">
-                                    <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                                        {{ chats|length }} message{% if chats|length != 1 %}s{% endif %}
-                                    </span>
-                                </div>
+                            <div class="relative mb-4">
+                                <input type="text" id="user-search" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3 border text-gray-700" placeholder="Search users...">
+                                <div id="search-results" class="search-results hidden mt-1"></div>
                             </div>
-                            
-                            <div class="chat-container">
-                                {% if chats %}
-                                    {% for chat in chats %}
-                                        <div class="mb-4 {% if chat[1] == session.user_id %}text-right{% endif %}">
-                                            <div class="inline-block max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl {% if chat[1] == session.user_id %}message-outgoing{% else %}message-incoming{% endif %} p-4 mb-1">
-                                                {% if chat[2].startswith("b'") and chat[2].endswith("'") %}
-                                                    <p class="{% if chat[1] == session.user_id %}text-white{% else %}text-gray-800{% endif %}">
-                                                        <i class="fas fa-lock"></i> Encrypted message (decryption needed)
-                                                    </p>
-                                                {% else %}
-                                                    <p class="{% if chat[1] == session.user_id %}text-white{% else %}text-gray-800{% endif %}">{{ chat[2] }}</p>
-                                                {% endif %}
-                                            </div>
-                                            <div class="flex items-center space-x-2 text-xs mt-1 {% if chat[1] == session.user_id %}justify-end{% endif %}">
-                                                {% if chat[7] %}
-                                                    <span class="text-green-600 flex items-center">
-                                                        <i class="fas fa-check-circle mr-1"></i> Verified
-                                                    </span>
-                                                {% else %}
-                                                    <span class="text-red-600 flex items-center">
-                                                        <i class="fas fa-times-circle mr-1"></i> Unverified
-                                                    </span>
-                                                {% endif %}
-                                                <span class="text-gray-400">|</span>
-                                                {% if chat[8] %}
-                                                    <span class="text-green-600 flex items-center">
-                                                        <i class="fas fa-certificate mr-1"></i> Cert Valid
-                                                    </span>
-                                                {% else %}
-                                                    <span class="text-red-600 flex items-center">
-                                                        <i class="fas fa-exclamation-triangle mr-1"></i> Cert Invalid
-                                                    </span>
-                                                {% endif %}
-                                            </div>
-                                        </div>
+                            <div id="inbox-list" class="space-y-2 max-h-[50vh] overflow-y-auto">
+                                {% if inboxes %}
+                                    {% for inbox_id, inbox in inboxes.items() %}
+                                        <a href="{{ url_for('chat', inbox_id=inbox_id) }}" class="inbox-item block w-full px-3 py-2 rounded-lg text-gray-700 hover:bg-blue-100 {% if selected_inbox_id == inbox_id %}inbox-active{% endif %}" data-username="{{ inbox.username|lower }}" data-role="inbox">
+                                            <span class="font-medium">{{ inbox.username }}</span>
+                                            <span class="text-xs text-gray-500">({{ inbox.messages|length }} messages)</span>
+                                        </a>
                                     {% endfor %}
                                 {% else %}
-                                    <div class="text-center py-8 text-gray-500">
-                                        <i class="fas fa-comment-slash text-3xl mb-2"></i>
-                                        <p>No messages yet. Start a conversation!</p>
-                                    </div>
+                                    <p class="text-gray-500 text-sm">No conversations yet.</p>
                                 {% endif %}
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- Message Form and Chat History -->
+                    <div class="md:col-span-3">
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <!-- Message Form -->
+                            <div>
+                                <div class="bg-white rounded-lg p-4 shadow-inner">
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center justify-between">
+    <span class="flex items-center">
+        <i class="fas fa-user-secret mr-2 text-blue-600"></i> Private Message 
+    </span>
+    <a href="http://panel.ankitgupta.com.np:25569/chat" class="text-blue-600 hover:text-blue-800" title="Reload">
+        <i class="fas fa-sync-alt"></i>
+    </a>
+</h3>
+                                    <form method="POST" class="space-y-4">
+                                        {% if selected_inbox_id %}
+                                            <input type="hidden" name="receiver_id" value="{{ selected_inbox_id }}">
+                                            <p class="text-sm text-gray-600">To: <span class="font-semibold text-blue-600">{{ inboxes[selected_inbox_id].username }}</span></p>
+                                        {% else %}
+                                            <div>
+                                                <label for="receiver_id" class="block text-sm font-semibold text-gray-700 mb-1">Recipient</label>
+                                                <select name="receiver_id" id="receiver_id" class="block w-full rounded-md border-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3 border" required>
+                                                    {% for user in users %}
+                                                        <option value="{{ user[0] }}">{{ user[1] }} ({{ user[2] }})</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        {% endif %}
+                                        <div>
+                                            <label for="private_message" class="block text-sm font-semibold text-gray-700 mb-1">Message</label>
+                                            <textarea name="message" id="private_message" rows="4" class="block w-full rounded-md border-gray-200 shadow-sm focus:border-blue-500 focus:ring-blue-500 py-2 px-3 border" placeholder="Type your message..." required></textarea>
+                                        </div>
+                                        <button type="submit" class="btn-primary text-white px-4 py-2 rounded-md font-semibold w-full flex items-center justify-center space-x-2">
+                                            <i class="fas fa-paper-plane"></i>
+                                            <span>Send Private Message</span>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                            
+                            <!-- Private Chat History -->
+                            <div>
+                                <div class="bg-gray-50 rounded-lg p-4 shadow-inner h-full">
+                                    <div class="flex justify-between items-center mb-4">
+                                        <h3 class="text-lg font-semibold text-gray-800 flex items-center">
+                                            <i class="fas fa-history mr-2 text-blue-600"></i> Private Messages
+                                        </h3>
+                                        <div class="flex items-center space-x-2">
+                                            <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                                {% if selected_inbox_id %}
+                                                    {{ inboxes[selected_inbox_id].messages|length }} message{% if inboxes[selected_inbox_id].messages|length != 1 %}s{% endif %}
+                                                {% else %}
+                                                    {{ private_chats|length }} message{% if private_chats|length != 1 %}s{% endif %}
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="chat-container">
+                                        {% if selected_inbox_id %}
+                                            {% for chat in inboxes[selected_inbox_id].messages %}
+                                                <div class="mb-4 {% if chat[1] == session.user_id|string %}text-right{% endif %}">
+                                                    <div class="inline-block max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl {% if chat[1] == session.user_id|string %}message-outgoing{% else %}message-incoming{% endif %} p-4 mb-1">
+                                                        {% if chat[3] is not none and chat[3]|starts_with("b'") and chat[3]|endswith("'") %}
+                                                            <p class="{% if chat[1] == session.user_id|string %}text-white{% else %}text-gray-800{% endif %}">
+                                                                <i class="fas fa-lock"></i> Encrypted message (decryption needed)
+                                                            </p>
+                                                        {% else %}
+                                                            <p class="{% if chat[1] == session.user_id|string %}text-white{% else %}text-gray-800{% endif %}">{{ chat[3] }}</p>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="text-xs text-gray-500 mt-1">
+                                                        <span class="font-medium {% if chat[1] == session.user_id|string %}text-blue-600{% else %}text-gray-600{% endif %}">
+                                                            {% if chat[1] == session.user_id|string %}
+                                                                You to {{ chat[9] }}
+                                                            {% else %}
+                                                                {{ chat[5] }} to you
+                                                            {% endif %}
+                                                        </span>
+                                                        <span class="mx-1">•</span>
+                                                        <span>{{ chat[4] }}</span>
+                                                    </div>
+                                                    <div class="flex items-center space-x-2 text-xs mt-1 {% if chat[1] == session.user_id|string %}justify-end{% endif %}">
+                                                        {% if chat[8] %}
+                                                            <span class="text-green-600 flex items-center">
+                                                                <i class="fas fa-check-circle mr-1"></i> Verified
+                                                            </span>
+                                                        {% else %}
+                                                            <span class="text-red-600 flex items-center">
+                                                                <i class="fas fa-times-circle mr-1"></i> Unverified
+                                                            </span>
+                                                        {% endif %}
+                                                        <span class="text-gray-400">|</span>
+                                                        {% if chat[9] %}
+                                                            <span class="text-green-600 flex items-center">
+                                                                <i class="fas fa-certificate mr-1"></i> Cert Valid
+                                                            </span>
+                                                        {% else %}
+                                                            <span class="text-red-600 flex items-center">
+                                                                <i class="fas fa-exclamation-triangle mr-1"></i> Cert Invalid
+                                                            </span>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                        {% else %}
+                                            {% if private_chats %}
+                                                {% for chat in private_chats %}
+                                                    <div class="mb-4 {% if chat[1] == session.user_id|string %}text-right{% endif %}">
+                                                        <div class="inline-block max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl {% if chat[1] == session.user_id|string %}message-outgoing{% else %}message-incoming{% endif %} p-4 mb-1">
+                                                            {% if chat[3] is not none and chat[3]|starts_with("b'") and chat[3]|endswith("'") %}
+                                                                <p class="{% if chat[1] == session.user_id|string %}text-white{% else %}text-gray-800{% endif %}">
+                                                                    <i class="fas fa-lock"></i> Encrypted message (decryption needed)
+                                                                </p>
+                                                            {% else %}
+                                                                <p class="{% if chat[1] == session.user_id|string %}text-white{% else %}text-gray-800{% endif %}">{{ chat[3] }}</p>
+                                                            {% endif %}
+                                                        </div>
+                                                        <div class="text-xs text-gray-500 mt-1">
+                                                            <span class="font-medium {% if chat[1] == session.user_id|string %}text-blue-600{% else %}text-gray-600{% endif %}">
+                                                                {% if chat[1] == session.user_id|string %}
+                                                                    You to {{ chat[10] }}
+                                                                {% else %}
+                                                                    {{ chat[5] }} to you
+                                                                {% endif %}
+                                                            </span>
+                                                            <span class="mx-1">•</span>
+                                                            <span>{{ chat[4] }}</span>
+                                                        </div>
+                                                        <div class="flex items-center space-x-2 text-xs mt-1 {% if chat[1] == session.user_id|string %}justify-end{% endif %}">
+                                                            {% if chat[8] %}
+                                                                <span class="text-green-600 flex items-center">
+                                                                    <i class="fas fa-check-circle mr-1"></i> Verified
+                                                                    </span>
+                                                                {% else %}
+                                                                    <span class="text-red-600 flex items-center">
+                                                                        <i class="fas fa-times-circle mr-1"></i> Unverified
+                                                                    </span>
+                                                                {% endif %}
+                                                                <span class="text-gray-400">|</span>
+                                                                {% if chat[9] %}
+                                                                    <span class="text-green-600 flex items-center">
+                                                                        <i class="fas fa-certificate mr-1"></i> Cert Valid
+                                                                    </span>
+                                                                {% else %}
+                                                                    <span class="text-red-600 flex items-center">
+                                                                        <i class="fas fa-exclamation-triangle mr-1"></i> Cert Invalid
+                                                                    </span>
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                    {% endfor %}
+                                                {% else %}
+                                                    <div class="text-center py-8 text-gray-500">
+                                                        <i class="fas fa-comment-slash text-3xl mb-2"></i>
+                                                        <p>No private messages yet.</p>
+                                                    </div>
+                                                {% endif %}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
             
             <!-- File Tab Content -->
             <div id="file-content" class="hidden p-6">
@@ -311,15 +465,15 @@
                             </h3>
                             <form method="POST" enctype="multipart/form-data" action="{{ url_for('upload_file') }}" class="space-y-4">
                                 <div>
-                                    <label for="file_receiver_id" class="block text-sm font-medium text-gray-700 mb-1">Recipient</label>
-                                    <select name="receiver_id" id="file_receiver_id" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 py-2 px-3 border" required>
+                                    <label for="file_receiver_id" class="block text-sm font-semibold text-gray-700 mb-1">Recipient</label>
+                                    <select name="receiver_id" id="file_receiver_id" class="block w-full rounded-md border-gray-200 shadow-sm focus:border-green-500 focus:ring-green-500 py-2 px-3 border" required>
                                         {% for user in users %}
                                             <option value="{{ user[0] }}">{{ user[1] }} ({{ user[2] }})</option>
                                         {% endfor %}
                                     </select>
                                 </div>
                                 <div>
-                                    <label for="file" class="block text-sm font-medium text-gray-700 mb-1">File</label>
+                                    <label for="file" class="block text-sm font-semibold text-gray-700 mb-1">File</label>
                                     <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
                                         <div class="space-y-1 text-center">
                                             <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
@@ -336,7 +490,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <button type="submit" class="btn-success text-white px-4 py-2 rounded-md font-medium w-full flex items-center justify-center space-x-2">
+                                <button type="submit" class="btn-success text-white px-4 py-2 rounded-md font-semibold w-full flex items-center justify-center space-x-2">
                                     <i class="fas fa-upload"></i>
                                     <span>Upload File</span>
                                 </button>
@@ -361,7 +515,7 @@
                             <div class="space-y-3">
                                 {% if files %}
                                     {% for file in files %}
-                                        <div class="file-card bg-white p-4 rounded-lg shadow-sm">
+                                        <div class="file-card bg-white p-4 rounded-lg shadow">
                                             <div class="flex items-start justify-between">
                                                 <div class="flex items-start space-x-3">
                                                     <div class="bg-blue-100 p-2 rounded-lg">
@@ -381,12 +535,10 @@
                                                         <a href="{{ url_for('download_file', file_id=file[0]) }}" class="font-medium text-blue-600 hover:underline">{{ file[3] }}</a>
                                                         <p class="text-xs text-gray-500 mt-1">
                                                             {% if file[1] == session.user_id %}
-                                                                You → {{ file[5] }}
+                                                                You → {{ file[4] }}
                                                             {% else %}
                                                                 {{ file[4] }} → You
                                                             {% endif %}
-                                                            <span class="mx-1">•</span>
-                                                            {{ file[6] }}
                                                         </p>
                                                     </div>
                                                 </div>
@@ -407,54 +559,228 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Public Chat Content -->
+            <div id="public-content" class="hidden p-6">
+                <div class="grid md:grid-cols-3 gap-6">
+                    <!-- Public Message Form -->
+                    <div class="md:col-span-1">
+                        <div class="bg-purple-50 rounded-lg p-4 shadow-inner">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-3 flex items-center">
+                                <i class="fas fa-globe mr-2 text-purple-600"></i> Global Message
+                            </h3>
+                            <form method="POST" class="space-y-4">
+                                <input type="hidden" name="is_public" value="1">
+                                <div>
+                                    <label for="public_message" class="block text-sm font-semibold text-gray-700 mb-1">Message</label>
+                                    <textarea name="message" id="public_message" rows="4" class="block w-full rounded-md border-gray-200 shadow-sm focus:border-purple-500 focus:ring-purple-500 py-2 px-3 border" placeholder="Type your message..." required></textarea>
+                                </div>
+                                <button type="submit" class="btn-public text-white px-4 py-2 rounded-md font-semibold w-full flex items-center justify-center space-x-2">
+                                    <i class="fas fa-bullhorn"></i>
+                                    <span>Send to Everyone</span>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Public Chat History -->
+                    <div class="md:col-span-2">
+                        <div class="bg-gray-50 rounded-lg p-4 shadow-inner h-full">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-semibold text-gray-800 flex items-center">
+                                    <i class="fas fa-users mr-2 text-purple-600"></i> Global Chat
+                                </h3>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">
+                                        {{ public_chats|length }} message{% if public_chats|length != 1 %}s{% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="chat-container">
+                                {% if public_chats %}
+                                    {% for chat in public_chats %}
+                                        <div class="mb-4">
+                                            <div class="inline-block max-w-xs md:max-w-md lg:max-w-lg xl:max-w-xl message-public p-4 mb-1">
+                                                {% if chat[3] is not none and chat[3]|starts_with("b'") and chat[3]|endswith("'") %}
+                                                    <p class="text-gray-800">
+                                                        <i class="fas fa-lock"></i> Encrypted message (decryption needed)
+                                                    </p>
+                                                {% else %}
+                                                    <p class="text-gray-800">{{ chat[3]|default('No message') }}</p>
+                                                {% endif %}
+                                            </div>
+                                            <div class="text-xs text-gray-500 mt-1">
+                                                <span class="font-medium text-purple-600">
+                                                    {{ chat[5] }}
+                                                </span>
+                                                <span class="mx-1">•</span>
+                                                <span>{{ chat[4] }}</span>
+                                            </div>
+                                            <div class="flex items-center space-x-2 text-xs mt-1">
+                                                {% if chat[8] %}
+                                                    <span class="text-green-600 flex items-center">
+                                                        <i class="fas fa-check-circle mr-1"></i> Verified
+                                                    </span>
+                                                {% else %}
+                                                    <span class="text-red-600 flex items-center">
+                                                        <i class="fas fa-times-circle mr-1"></i> Unverified
+                                                    </span>
+                                                {% endif %}
+                                                <span class="text-gray-400">|</span>
+                                                {% if chat[9] %}
+                                                    <span class="text-green-600 flex items-center">
+                                                        <i class="fas fa-certificate mr-1"></i> Cert Valid
+                                                    </span>
+                                                {% else %}
+                                                    <span class="text-red-600 flex items-center">
+                                                        <i class="fas fa-exclamation-triangle mr-1"></i> Cert Invalid
+                                                    </span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="text-center py-8 text-gray-500">
+                                        <i class="fas fa-comments text-3xl mb-2"></i>
+                                        <p>No global messages yet. Say hello to everyone!</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
 
     <!-- Footer -->
-    <footer class="bg-gradient-to-r from-blue-900 to-indigo-900 text-white py-6">
+    <footer class="bg-gradient-to-r from-blue-900 to-blue-800 text-white py-6">
         <div class="container mx-auto px-4">
             <div class="flex flex-col md:flex-row justify-between items-center">
                 <div class="flex items-center space-x-2 mb-4 md:mb-0">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a3 3 0 003-3v-6h-6a3 3 0 00-3 3v6h-6a3 3 0 003 3zm10-10V7a4 4 0 00-8 0v4h8z" />
                     </svg>
-                    <span class="font-medium">SecurePKI<span class="text-blue-300">Chat</span></span>
+                    <span class="font-semibold">SecurePKI<span class="text-blue-300">Chat</span></span>
                 </div>
-                <p class="text-blue-300 text-sm">&copy; 2025 Secure PKI Chat By Ankit Gupta. All rights reserved.</p>
+                <p class="text-blue-300 text-sm">© 2025 Secure PKI Chat By Ankit Gupta. All rights reserved.</p>
             </div>
         </div>
     </footer>
 
     <script>
         // Tab switching functionality
-        const messageTab = document.getElementById('message-tab');
+        const privateTab = document.getElementById('private-tab');
         const fileTab = document.getElementById('file-tab');
-        const messageContent = document.getElementById('message-content');
+        const publicTab = document.getElementById('public-tab');
+        const privateContent = document.getElementById('private-content');
         const fileContent = document.getElementById('file-content');
+        const publicContent = document.getElementById('public-content');
         
-        messageTab.addEventListener('click', () => {
-            messageTab.classList.add('tab-active');
-            messageTab.classList.remove('text-gray-500', 'hover:text-gray-700');
-            fileTab.classList.remove('tab-active');
-            fileTab.classList.add('text-gray-500', 'hover:text-gray-700');
-            messageContent.classList.remove('hidden');
-            fileContent.classList.add('hidden');
-        });
-        
-        fileTab.addEventListener('click', () => {
-            fileTab.classList.add('tab-active');
-            fileTab.classList.remove('text-gray-500', 'hover:text-gray-700');
-            messageTab.classList.remove('tab-active');
-            messageTab.classList.add('text-gray-500', 'hover:text-gray-700');
-            fileContent.classList.remove('hidden');
-            messageContent.classList.add('hidden');
-        });
-        
-        // Auto-scroll chat to bottom
-        const chatContainer = document.querySelector('.chat-container');
-        if (chatContainer) {
-            chatContainer.scrollTop = chatContainer.scrollHeight;
+        function switchTab(activeTab, activeContent) {
+            [privateTab, fileTab, publicTab].forEach(tab => {
+                tab.classList.remove('tab-active');
+                tab.classList.add('text-gray-500', 'hover:text-gray-700');
+            });
+            [privateContent, fileContent, publicContent].forEach(content => {
+                content.classList.add('hidden');
+            });
+            activeTab.classList.add('tab-active');
+            activeTab.classList.remove('text-gray-500', 'hover:text-gray-700');
+            activeContent.classList.remove('hidden');
         }
+        
+        privateTab.addEventListener('click', () => switchTab(privateTab, privateContent));
+        fileTab.addEventListener('click', () => switchTab(fileTab, fileContent));
+        publicTab.addEventListener('click', () => switchTab(publicTab, publicContent));
+
+        // Auto-scroll chat containers
+        const chatContainers = document.querySelectorAll('.chat-container');
+        chatContainers.forEach(container => {
+            container.scrollTop = container.scrollHeight;
+        });
+
+        // Search functionality
+        const userSearch = document.getElementById('user-search');
+        const searchResults = document.getElementById('search-results');
+        const inboxList = document.getElementById('inbox-list');
+        const users = [
+            {% for user in users %}
+                { id: {{ user[0] }}, username: '{{ user[1]|lower }}', role: '{{ user[2]|lower }}' },
+            {% endfor %}
+        ];
+        const inboxes = [
+            {% for inbox_id, inbox in inboxes.items() %}
+                { id: {{ inbox_id }}, username: '{{ inbox.username|lower }}', role: 'inbox' },
+            {% endfor %}
+        ];
+
+        userSearch.addEventListener('input', () => {
+            const query = userSearch.value.toLowerCase().trim();
+            searchResults.innerHTML = '';
+            if (query.length < 2) {
+                searchResults.classList.add('hidden');
+                inboxList.querySelectorAll('.inbox-item').forEach(item => {
+                    item.style.display = 'block';
+                });
+                return;
+            }
+
+            // Filter inboxes and users
+            const filteredInboxes = inboxes.filter(inbox => 
+                inbox.username.includes(query) || inbox.role.includes(query)
+            );
+            const filteredUsers = users.filter(user => 
+                (user.username.includes(query) || user.role.includes(query)) && 
+                !filteredInboxes.some(inbox => inbox.id === user.id)
+            );
+
+            // Display results
+            if (filteredInboxes.length || filteredUsers.length) {
+                searchResults.classList.remove('hidden');
+                filteredInboxes.forEach(inbox => {
+                    const div = document.createElement('div');
+                    div.className = 'search-result-item px-3 py-2 cursor-pointer text-gray-700 hover:bg-blue-100';
+                    div.innerHTML = `<span class="font-medium">${inbox.username}</span> <span class="text-xs text-gray-500">(Existing conversation)</span>`;
+                    div.addEventListener('click', () => {
+                        window.location.href = `/app/chat/${inbox.id}`;
+                    });
+                    searchResults.appendChild(div);
+                });
+                filteredUsers.forEach(user => {
+                    const div = document.createElement('div');
+                    div.className = 'search-result-item px-3 py-2 cursor-pointer text-gray-700 hover:bg-blue-100';
+                    div.innerHTML = `<span class="font-medium">${user.username}</span> <span class="text-xs text-gray-500">(${user.role})</span>`;
+                    div.addEventListener('click', () => {
+                        window.location.href = `/app/chat/${user.id}`;
+                    });
+                    searchResults.appendChild(div);
+                });
+            } else {
+                searchResults.classList.remove('hidden');
+                const div = document.createElement('div');
+                div.className = 'px-3 py-2 text-gray-500';
+                div.textContent = 'No users found';
+                searchResults.appendChild(div);
+            }
+
+            // Filter inbox list
+            inboxList.querySelectorAll('.inbox-item').forEach(item => {
+                const username = item.getAttribute('data-username');
+                item.style.display = username.includes(query) ? 'block' : 'none';
+            });
+        });
+
+        // Hide search results when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!userSearch.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.classList.add('hidden');
+                inboxList.querySelectorAll('.inbox-item').forEach(item => {
+                    item.style.display = 'block';
+                });
+            }
+        });
     </script>
 </body>
 </html>
